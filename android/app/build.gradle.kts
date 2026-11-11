@@ -15,6 +15,20 @@ android {
         versionName = "1.1.0"
     }
 
+    // CI passes a persistent keystore (see .github/workflows/android.yml) so
+    // updates install over earlier builds. Local builds use the debug key.
+    val keystorePath: String? = System.getenv("SIGNING_KEYSTORE")
+    signingConfigs {
+        create("release") {
+            if (keystorePath != null) {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("SIGNING_PASSWORD")
+                keyAlias = "shortformblocker"
+                keyPassword = System.getenv("SIGNING_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -23,9 +37,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
-            // Sideloaded personal build: sign with the debug key so the APK
-            // installs without setting up a release keystore.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName(if (keystorePath != null) "release" else "debug")
         }
     }
 

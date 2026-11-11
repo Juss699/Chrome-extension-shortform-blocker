@@ -5,8 +5,10 @@ name: Android app
 # https://github.com/<owner>/<repo>/releases/latest/download/ShortFormBlocker.apk
 #
 # Signing: Android only installs an update over an app signed with the same
-# key. The build's signing key is kept in the Actions cache so every build
-# uses the same one; the weekly "keep-key" job stops the cache from expiring.
+# key. The first build creates a signing key and keeps it in the Actions cache
+# (not in the repo), so every later build uses the same one. The weekly
+# "keep-key" job stops the cache from expiring. The password only protects the
+# file inside that cache.
 on:
   push:
     branches: [main]
@@ -38,13 +40,27 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Restore signing key
+        id: signing-key
         uses: actions/cache@v4
         with:
-          path: ~/.android/debug.keystore
+          path: ~/signing
           key: android-signing-key-v1
 
+      - name: Create signing key (first build only)
+        if: steps.signing-key.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/signing
+          keytool -genkeypair -keystore ~/signing/release.keystore -storetype PKCS12 \
+            -alias shortformblocker -keyalg RSA -keysize 4096 -validity 36500 \
+            -storepass "$SIGNING_PASSWORD" -keypass "$SIGNING_PASSWORD" \
+            -dname "CN=Short-Form Blocker"
+        env:
+          SIGNING_PASSWORD: shortformblocker
+
       - name: Build APK
-        run: ./gradlew --no-daemon assembleRelease
+        run: SIGNING_KEYSTORE="$HOME/signing/release.keystore" ./gradlew --no-daemon assembleRelease
+        env:
+          SIGNING_PASSWORD: shortformblocker
 
       - name: Rename APK
         run: cp app/build/outputs/apk/release/app-release.apk ShortFormBlocker.apk
@@ -75,5 +91,5 @@ jobs:
       - name: Touch the cached signing key
         uses: actions/cache/restore@v4
         with:
-          path: ~/.android/debug.keystore
+          path: ~/signing
           key: android-signing-key-v1
