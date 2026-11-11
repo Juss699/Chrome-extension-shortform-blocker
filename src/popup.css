@@ -56,7 +56,7 @@ h1 {
 }
 
 main {
-  padding: 6px 16px 14px;
+  padding: 0 16px 8px;
   transition: opacity 0.15s;
 }
 
@@ -69,7 +69,7 @@ body.off main {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 0;
+  padding: 9px 0;
   border-bottom: 1px solid var(--line);
   cursor: pointer;
 }
@@ -85,28 +85,41 @@ small {
   font-size: 12px;
 }
 
-fieldset {
-  margin: 0;
-  padding: 0;
-  border: 0;
+section {
+  padding: 4px 0 6px;
 }
 
-legend {
-  padding: 12px 0 6px;
-  font-weight: 600;
+section + section {
+  border-top: 1px solid var(--line);
 }
 
-.radio {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 0;
+h2 {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+section .row:last-child {
+  border-bottom: 0;
+}
+
+select {
+  flex: none;
+  padding: 4px 6px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--fg);
+  font: inherit;
   cursor: pointer;
 }
 
-.radio input {
-  margin: 0;
-  accent-color: var(--accent);
+select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
 /* Toggle switch */

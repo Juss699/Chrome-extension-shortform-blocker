@@ -1,16 +1,25 @@
-# Shorts Blocker for YouTube
+# Short-Form Blocker
 
-A small Chrome extension that takes YouTube Shorts out of YouTube. Shorts disappear from your feeds, search results and sidebar, and any Shorts link you open plays in the normal video player instead of the endless swipe feed.
+A small Chrome extension that takes the endless short-video feeds out of **YouTube** and **Instagram**. Shorts and Reels disappear from your feeds, and links to them open without the swipe-forever player.
 
-<img src="docs/popup.png" alt="Shorts Blocker popup" width="320">
+<img src="docs/popup.png" alt="Short-Form Blocker popup" width="320">
 
 ## What it does
 
-- **Hides Shorts everywhere:** shelves on the home page, subscriptions, search results, the watch-page sidebar, channel pages and history; the Shorts entry in the sidebar; the Shorts search filter chip; the Shorts tab on channel pages; Shorts in notifications. Also covers `m.youtube.com`.
-- **Redirects Shorts links:** `youtube.com/shorts/ID` opens as `youtube.com/watch?v=ID`, or sends you to the homepage if you prefer. The `/shorts` feed goes to the homepage and a channel's Shorts tab goes to its Videos tab.
-- **One-click pause:** switch everything off from the toolbar popup. The icon shows an "off" badge while paused.
+### YouTube Shorts
+- **Hidden:** Shorts shelves on the home page, subscriptions, search results, the watch-page sidebar, channel pages and history. Also the Shorts entry in the sidebar, the Shorts search filter, the Shorts tab on channels and Shorts in notifications. Covers `m.youtube.com` too.
+- **Redirected:** `youtube.com/shorts/ID` plays as a normal video (`/watch?v=ID`), or goes to the homepage if you prefer. The Shorts feed goes to the homepage, and a channel's Shorts tab goes to its Videos tab.
 
-No tracking, no network requests, no data leaves your browser. Settings are stored with `chrome.storage.sync`.
+### Instagram Reels
+- **Hidden:** the Reels tab in the sidebar, reel posts in your home feed, reels in the Explore grid, and the Reels tab on profiles. Photo posts with music stay.
+- **Redirected:** the Reels tab (`/reels/`) goes to the homepage. A reel opened inside the swipeable Reels feed (`/reels/ID`) opens as just that reel (`/reel/ID`), with no swiping on to the next one. A profile's Reels tab goes to the profile.
+- **Still works:** a reel someone sends you in DMs still opens. Switch the redirect to "Go to homepage" to block single reels too.
+- Any reel that starts playing while hidden is paused.
+
+### Everywhere
+- **One-click pause:** switch everything off from the toolbar popup. The icon shows an "off" badge while paused.
+- **Per-site settings:** each site has its own hide switch and redirect choice.
+- **Private:** no tracking and no network requests. Settings are stored with `chrome.storage.sync`.
 
 ## Install
 
@@ -24,45 +33,47 @@ The extension isn't on the Chrome Web Store, so you load it yourself (takes a mi
 
 Works in any Chromium browser that supports Manifest V3: Chrome, Edge, Brave, Opera, Vivaldi.
 
-To update after pulling new changes, hit the reload icon on the extension's card in `chrome://extensions`.
+To update after pulling new changes, hit the reload icon on the extension's card in `chrome://extensions`, then refresh any open YouTube or Instagram tabs.
 
 ## Settings
 
 | Setting | Options |
 | --- | --- |
 | Master switch | On / off (top-right toggle in the popup) |
-| Hide Shorts | Hide Shorts shelves, cards, tabs and sidebar entry |
-| When a Shorts link is opened | Play it in the normal player · Go to the YouTube homepage · Leave it alone |
+| YouTube: Hide Shorts | On / off |
+| YouTube: Shorts links | Play in normal player · Go to homepage · Leave alone |
+| Instagram: Hide Reels | On / off |
+| Instagram: Reels links | Show just that reel · Go to homepage · Leave alone |
 
 ## How it works
 
 | Part | File | Job |
 | --- | --- | --- |
-| Hiding | `src/content.css` | CSS rules that hide Shorts components. All scoped to `html[data-ysb-hide]`, so turning the feature off restores the page instantly. |
-| Content script | `src/content.js` | Sets that attribute from your settings, catches clicks on Shorts links and YouTube's in-page navigation, and flags elements that can only be recognised by their "Shorts" label. |
-| Redirect rules | `rules/*.json` | `declarativeNetRequest` rules that rewrite Shorts URLs before the page loads (typed URLs, links from other sites, new tabs). |
-| Service worker | `src/background.js` | Switches the redirect rulesets on and off to match your settings and sets the toolbar badge. |
+| Hiding | `src/sites/youtube.css`, `src/sites/instagram.css` | CSS rules that hide Shorts and Reels. All scoped to `html[data-ysb-hide]`, so turning a site off restores the page instantly. |
+| Content script | `src/content.js` | Sets that attribute from your settings. Catches clicks and in-page navigation to Shorts/Reels. Flags YouTube elements that can only be recognised by their "Shorts" label, and pauses Instagram videos that were hidden mid-play. |
+| Redirect rules | `rules/*.json` | `declarativeNetRequest` rules that rewrite Shorts/Reels URLs before the page loads (typed URLs, links from other sites, new tabs). One ruleset per site and redirect mode. |
+| Service worker | `src/background.js` | Switches the rulesets on and off to match your settings, and sets the toolbar badge. |
 | Popup | `src/popup.*` | The settings panel. |
 
 ### Permissions
 
 - `storage`: to save your settings.
-- `declarativeNetRequest` + access to `youtube.com`: to redirect Shorts URLs and hide Shorts on YouTube pages. The extension runs on no other site.
+- `declarativeNetRequest` + access to `youtube.com` and `instagram.com`: to redirect Shorts/Reels URLs and hide them on those sites. The extension runs on no other site.
 
-## When YouTube changes its layout
+## When a site changes its layout
 
-YouTube renames its page components every so often, which can let Shorts creep back in somewhere. To fix it:
+YouTube and Instagram both change their page markup regularly, which can let Shorts or Reels creep back in somewhere. To fix it:
 
-1. Right-click the Shorts element → **Inspect**.
-2. Find its outer element (tag names look like `ytd-…`, `yt-…` or `ytm-…`).
-3. Add a selector for it to `src/content.css`, scoped with `html[data-ysb-hide]` like the others.
+1. Right-click the element → **Inspect**.
+2. Find something stable to target. On YouTube that's a tag name like `ytd-…`, `yt-…` or `ytm-…`. On Instagram, class names are random, so use link targets (`a[href*="/reel/"]`) and tags like `article`.
+3. Add a selector to the site's file in `src/sites/`, scoped with `html[data-ysb-hide]` like the others.
 4. Reload the extension and open a pull request.
 
 ## Development
 
 There are no build steps. Edit the files, then reload the extension.
 
-End-to-end tests load the extension in headless Chrome and point `youtube.com` at a local mock page (`tests/mock_youtube.py`), then check hiding, all redirect modes, settings changes and the popup:
+End-to-end tests load the extension in headless Chrome and point `youtube.com` and `instagram.com` at local mock pages (`tests/mock_sites.py`). They check hiding, every redirect mode, in-page navigation, settings changes and the popup:
 
 ```bash
 pip install playwright
@@ -70,7 +81,7 @@ playwright install chromium
 ./tests/run.sh
 ```
 
-Set `CHROME_PATH` to use a specific Chrome for Testing or Chromium build. (Branded Google Chrome 137+ no longer allows loading extensions from the command line, so use Chromium or Chrome for Testing.)
+Set `CHROME_PATH` to use a specific Chrome for Testing or Chromium build. Branded Google Chrome 137+ no longer allows loading extensions from the command line, so use Chromium or Chrome for Testing.
 
 ## Project structure
 
@@ -78,8 +89,8 @@ Set `CHROME_PATH` to use a specific Chrome for Testing or Chromium build. (Brand
 manifest.json          Extension manifest (MV3)
 src/
   defaults.js          Default settings, shared by every script
-  content.js           Content script
-  content.css          Hiding rules
+  content.js           Content script (both sites)
+  sites/               Hiding rules per site
   background.js        Service worker
   popup.html/.css/.js  Settings popup
 rules/                 declarativeNetRequest redirect rulesets
@@ -89,4 +100,4 @@ tests/                 End-to-end tests
 
 ## License
 
-[MIT](LICENSE). Not affiliated with or endorsed by YouTube or Google.
+[MIT](LICENSE). Not affiliated with or endorsed by YouTube, Google, Instagram or Meta.

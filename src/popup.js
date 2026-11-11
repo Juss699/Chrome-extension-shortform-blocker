@@ -1,26 +1,24 @@
-// Shorts Blocker — popup settings.
-const enabledBox = document.getElementById("enabled");
-const hideBox = document.getElementById("hideShorts");
-const radios = document.querySelectorAll('input[name="redirect"]');
+// Short-Form Blocker — popup settings.
+// Every control carries a data-key naming the setting it edits.
+const controls = document.querySelectorAll("[data-key]");
 const status = document.getElementById("status");
 
 function render(settings) {
-  enabledBox.checked = settings.enabled;
-  hideBox.checked = settings.hideShorts;
-  for (const radio of radios) radio.checked = radio.value === settings.redirect;
+  for (const el of controls) {
+    const value = settings[el.dataset.key];
+    if (el.type === "checkbox") el.checked = value;
+    else el.value = value;
+  }
   document.body.classList.toggle("off", !settings.enabled);
-  status.textContent = settings.enabled ? "Blocking Shorts on YouTube" : "Paused";
+  status.textContent = settings.enabled ? "Blocking Shorts and Reels" : "Paused";
 }
 
-async function save(patch) {
-  await chrome.storage.sync.set(patch);
-  render(await chrome.storage.sync.get(YSB_DEFAULTS));
-}
-
-enabledBox.addEventListener("change", () => save({ enabled: enabledBox.checked }));
-hideBox.addEventListener("change", () => save({ hideShorts: hideBox.checked }));
-for (const radio of radios) {
-  radio.addEventListener("change", () => save({ redirect: radio.value }));
+for (const el of controls) {
+  el.addEventListener("change", async () => {
+    const value = el.type === "checkbox" ? el.checked : el.value;
+    await chrome.storage.sync.set({ [el.dataset.key]: value });
+    render(await chrome.storage.sync.get(YSB_DEFAULTS));
+  });
 }
 
 chrome.storage.sync.get(YSB_DEFAULTS).then(render);

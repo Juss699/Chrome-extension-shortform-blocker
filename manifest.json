@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "Shorts Blocker for YouTube",
-  "short_name": "Shorts Blocker",
-  "version": "1.0.0",
-  "description": "Removes YouTube Shorts from your feeds, search and sidebar, and opens Shorts links in the normal video player.",
+  "name": "Short-Form Blocker: YouTube Shorts & Instagram Reels",
+  "short_name": "Short-Form Blocker",
+  "version": "1.1.0",
+  "description": "Removes YouTube Shorts and Instagram Reels from your feeds, and opens Shorts and Reels links without the endless swipe feed.",
   "icons": {
     "16": "icons/icon16.png",
     "32": "icons/icon32.png",
@@ -14,7 +14,9 @@
   "host_permissions": [
     "*://youtube.com/*",
     "*://www.youtube.com/*",
-    "*://m.youtube.com/*"
+    "*://m.youtube.com/*",
+    "*://instagram.com/*",
+    "*://www.instagram.com/*"
   ],
   "background": {
     "service_worker": "src/background.js"
@@ -22,14 +24,24 @@
   "declarative_net_request": {
     "rule_resources": [
       {
-        "id": "shorts_to_watch",
+        "id": "youtube_to_watch",
         "enabled": true,
-        "path": "rules/shorts_to_watch.json"
+        "path": "rules/youtube_to_watch.json"
       },
       {
-        "id": "shorts_to_home",
+        "id": "youtube_to_home",
         "enabled": false,
-        "path": "rules/shorts_to_home.json"
+        "path": "rules/youtube_to_home.json"
+      },
+      {
+        "id": "instagram_to_single",
+        "enabled": true,
+        "path": "rules/instagram_to_single.json"
+      },
+      {
+        "id": "instagram_to_home",
+        "enabled": false,
+        "path": "rules/instagram_to_home.json"
       }
     ]
   },
@@ -41,12 +53,18 @@
         "*://m.youtube.com/*"
       ],
       "js": ["src/defaults.js", "src/content.js"],
-      "css": ["src/content.css"],
+      "css": ["src/sites/youtube.css"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["*://instagram.com/*", "*://www.instagram.com/*"],
+      "js": ["src/defaults.js", "src/content.js"],
+      "css": ["src/sites/instagram.css"],
       "run_at": "document_start"
     }
   ],
   "action": {
-    "default_title": "Shorts Blocker",
+    "default_title": "Short-Form Blocker",
     "default_popup": "src/popup.html",
     "default_icon": {
       "16": "icons/icon16.png",

@@ -1,35 +1,102 @@
-// Shorts Blocker — content script.
+// Short-Form Blocker — content script (YouTube and Instagram).
 //
-// Most hiding is done by content.css, which only applies while <html> has the
-// `data-ysb-hide` attribute. This script:
+// Most hiding is done by the per-site stylesheet in src/sites/, which only
+// applies while <html> has the `data-ysb-hide` attribute. This script:
 //   1. toggles that attribute from the saved settings,
-//   2. redirects Shorts URLs reached through YouTube's in-page navigation
-//      (full page loads are already redirected by the declarativeNetRequest
-//      rules in /rules), and
-//   3. flags the few Shorts elements that can only be recognised by their
-//      label (sidebar entry, search filter chip, channel tab).
+//   2. redirects Shorts/Reels URLs reached through in-page navigation (full
+//      page loads are already redirected by the declarativeNetRequest rules
+//      in /rules), and
+//   3. handles the few things CSS can't: elements only recognisable by their
+//      label, page-type hints for the stylesheet, and pausing hidden videos.
 (() => {
   "use strict";
 
   const root = document.documentElement;
-  const HIDE_ATTR = "data-ysb-hide";
-  const MARK_ATTR = "data-ysb-shorts";
+  const HIDE_ATTR = "data-ysb-hide"; // on <html> while hiding is active
+  const PAGE_ATTR = "data-ysb-page"; // on <html>: what kind of page this is
+  const MARK_ATTR = "data-ysb-shorts"; // on elements flagged by label
+
+  // ---------------------------------------------------------------------------
+  // Per-site rules
+  // ---------------------------------------------------------------------------
+
+  /** YouTube: where a Shorts path should go instead, or null. */
+  function youtubeRedirect(path, mode) {
+    const channel = path.match(/^(\/(?:@[^/]+|channel\/[^/]+|c\/[^/]+|user\/[^/]+))\/shorts\/?$/);
+    if (channel) return `${channel[1]}/videos`;
+    if (/^\/shorts\/?$/.test(path)) return "/";
+    const video = path.match(/^\/shorts\/([A-Za-z0-9_-]+)/);
+    if (!video) return null;
+    return mode === "home" ? "/" : `/watch?v=${video[1]}`;
+  }
+
+  /** Instagram: where a Reels path should go instead, or null. */
+  function instagramRedirect(path, mode) {
+    // A profile's Reels tab -> the profile itself.
+    const profileTab = path.match(/^(\/[A-Za-z0-9._]+)\/reels\/?$/);
+    if (profileTab && profileTab[1] !== "/reels") return `${profileTab[1]}/`;
+    // The Reels feed and "reels using this audio" pages -> home.
+    if (/^\/reels\/?$/.test(path) || /^\/reels\/audio(\/|$)/.test(path)) return "/";
+    // A reel inside the swipeable feed -> that reel on its own.
+    const feedReel = path.match(/^\/reels\/([A-Za-z0-9_-]+)\/?$/);
+    if (feedReel) return mode === "home" ? "/" : `/reel/${feedReel[1]}/`;
+    // A single reel: only blocked in "home" mode.
+    if (mode === "home" && /^\/(?:[A-Za-z0-9._]+\/)?reel\/[A-Za-z0-9_-]+/.test(path)) return "/";
+    return null;
+  }
+
+  const SITES = [
+    {
+      host: /(^|\.)youtube\.com$/,
+      hideKey: "hideShorts",
+      redirectKey: "shortsRedirect",
+      redirect: youtubeRedirect,
+      // Elements whose only reliable Shorts signal is their label.
+      labelled: [
+        "ytd-guide-entry-renderer", // desktop sidebar
+        "ytd-mini-guide-entry-renderer", // collapsed sidebar
+        "yt-chip-cloud-chip-renderer", // search filter chips
+        "chip-shape", // newer chip component
+        "yt-tab-shape", // channel page tabs
+        "tp-yt-paper-tab", // older channel page tabs
+        "ytm-pivot-bar-item-renderer", // m.youtube.com bottom bar
+      ].join(","),
+    },
+    {
+      host: /(^|\.)instagram\.com$/,
+      hideKey: "hideReels",
+      redirectKey: "reelsRedirect",
+      redirect: instagramRedirect,
+      // Lets instagram.css keep a post visible on its own page, and target
+      // Explore specifically.
+      pageType(path) {
+        if (/^\/(?:[A-Za-z0-9._]+\/)?(?:p|reel|tv)\/[^/]+/.test(path)) return "post";
+        if (/^\/explore(\/|$)/.test(path)) return "explore";
+        return "";
+      },
+      // A reel hidden mid-playback would otherwise keep playing unseen.
+      pauseHiddenVideos: true,
+    },
+  ];
+
+  const site = SITES.find((s) => s.host.test(location.hostname));
+  if (!site) return;
 
   let settings = { ...YSB_DEFAULTS };
   // Redirects wait for the saved settings; hiding starts right away.
   let settingsLoaded = false;
 
+  const hidingOn = () => settings.enabled && settings[site.hideKey];
+
   // ---------------------------------------------------------------------------
   // Redirects
   // ---------------------------------------------------------------------------
 
-  const SHORT_VIDEO = /^\/shorts\/([A-Za-z0-9_-]+)/;
-  const SHORTS_FEED = /^\/shorts\/?$/;
-  const CHANNEL_SHORTS_TAB = /^(\/(?:@[^/]+|channel\/[^/]+|c\/[^/]+|user\/[^/]+))\/shorts\/?$/;
-
   /** Returns where `url` should go instead, or null to leave it alone. */
   function redirectTarget(url) {
-    if (!settingsLoaded || !settings.enabled || settings.redirect === "off") return null;
+    if (!settingsLoaded || !settings.enabled) return null;
+    const mode = settings[site.redirectKey];
+    if (mode === "off") return null;
 
     let u;
     try {
@@ -37,18 +104,10 @@
     } catch {
       return null;
     }
-    if (!/(^|\.)youtube\.com$/.test(u.hostname)) return null;
+    if (!site.host.test(u.hostname)) return null;
 
-    const channel = u.pathname.match(CHANNEL_SHORTS_TAB);
-    if (channel) return `${u.origin}${channel[1]}/videos`;
-
-    if (SHORTS_FEED.test(u.pathname)) return `${u.origin}/`;
-
-    const video = u.pathname.match(SHORT_VIDEO);
-    if (!video) return null;
-    return settings.redirect === "home"
-      ? `${u.origin}/`
-      : `${u.origin}/watch?v=${video[1]}`;
+    const path = site.redirect(u.pathname, mode);
+    return path ? u.origin + path : null;
   }
 
   let redirectingTo = null;
@@ -64,16 +123,15 @@
     if (target && target !== location.href) go(target, true);
   }
 
-  // Catch plain left-clicks on Shorts links before YouTube's router handles
-  // them, so the Shorts player never starts. Middle/modifier clicks open a new
-  // tab, which the declarativeNetRequest rules redirect on load.
+  // Catch plain left-clicks on links that would be redirected, before the
+  // site's router handles them, so the Shorts/Reels player never starts.
+  // Middle/modifier clicks open a new tab, which the declarativeNetRequest
+  // rules redirect on load.
   window.addEventListener(
     "click",
     (e) => {
       if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
-      const link = e
-        .composedPath()
-        .find((el) => el instanceof HTMLAnchorElement && el.href.includes("/shorts"));
+      const link = e.composedPath().find((el) => el instanceof HTMLAnchorElement && el.href);
       if (!link) return;
       const target = redirectTarget(link.href);
       if (!target) return;
@@ -84,26 +142,31 @@
     true
   );
 
-  // YouTube is a single-page app: watch for its own navigation events too.
-  // A capturing listener on window sees these wherever they are dispatched.
+  // Both sites are single-page apps. YouTube announces navigations with its
+  // own events; Instagram doesn't, so also watch the URL itself.
   for (const type of ["yt-navigate-start", "yt-navigate-finish", "popstate"]) {
-    window.addEventListener(type, checkLocation, true);
+    window.addEventListener(type, onUrlChange, true);
+  }
+  let lastHref = location.href;
+  setInterval(() => {
+    if (location.href !== lastHref) onUrlChange();
+  }, 250);
+
+  function onUrlChange() {
+    lastHref = location.href;
+    updatePageType();
+    checkLocation();
   }
 
   // ---------------------------------------------------------------------------
-  // Label-based hiding
+  // Hiding helpers
   // ---------------------------------------------------------------------------
 
-  // Elements whose only reliable Shorts signal is their label.
-  const LABELLED = [
-    "ytd-guide-entry-renderer", // desktop sidebar
-    "ytd-mini-guide-entry-renderer", // collapsed sidebar
-    "yt-chip-cloud-chip-renderer", // search filter chips
-    "chip-shape", // newer chip component
-    "yt-tab-shape", // channel page tabs
-    "tp-yt-paper-tab", // older channel page tabs
-    "ytm-pivot-bar-item-renderer", // m.youtube.com bottom bar
-  ].join(",");
+  function updatePageType() {
+    if (!site.pageType) return;
+    const type = site.pageType(location.pathname);
+    if (root.getAttribute(PAGE_ATTR) !== type) root.setAttribute(PAGE_ATTR, type);
+  }
 
   function labelOf(el) {
     const own =
@@ -117,10 +180,17 @@
   }
 
   function markLabelled() {
-    for (const el of document.querySelectorAll(LABELLED)) {
+    for (const el of document.querySelectorAll(site.labelled)) {
       const isShorts = labelOf(el).replace(/\s+/g, " ").trim().toLowerCase() === "shorts";
-      // YouTube recycles elements, so re-check (and un-mark) every time.
+      // Sites recycle elements, so re-check (and un-mark) every time.
       if (isShorts !== el.hasAttribute(MARK_ATTR)) el.toggleAttribute(MARK_ATTR, isShorts);
+    }
+  }
+
+  function pauseHiddenVideos() {
+    for (const video of document.querySelectorAll("video")) {
+      // A video inside a display:none ancestor has no layout boxes.
+      if (!video.paused && video.getClientRects().length === 0) video.pause();
     }
   }
 
@@ -128,12 +198,13 @@
   // Wiring
   // ---------------------------------------------------------------------------
 
-  function hidingOn() {
-    return settings.enabled && settings.hideShorts;
+  function syncHideAttr() {
+    if (root.hasAttribute(HIDE_ATTR) !== hidingOn()) root.toggleAttribute(HIDE_ATTR, hidingOn());
   }
 
   function apply() {
-    if (root.hasAttribute(HIDE_ATTR) !== hidingOn()) root.toggleAttribute(HIDE_ATTR, hidingOn());
+    syncHideAttr();
+    updatePageType();
     checkLocation();
     scheduleScan();
   }
@@ -144,7 +215,10 @@
     scanQueued = true;
     setTimeout(() => {
       scanQueued = false;
-      if (hidingOn()) markLabelled();
+      if (hidingOn()) {
+        if (site.labelled) markLabelled();
+        if (site.pauseHiddenVideos) pauseHiddenVideos();
+      }
       checkLocation();
     }, 150);
   }
@@ -153,7 +227,7 @@
     for (const m of mutations) {
       // Put our attribute back if the page ever strips it from <html>.
       if (m.type === "attributes") {
-        if (root.hasAttribute(HIDE_ATTR) !== hidingOn()) root.toggleAttribute(HIDE_ATTR, hidingOn());
+        syncHideAttr();
         continue;
       }
       scheduleScan();
@@ -166,7 +240,19 @@
     attributeFilter: [HIDE_ATTR],
   });
 
-  // Hide immediately with the defaults so Shorts never flash on screen, then
+  // Instagram starts autoplaying feed videos as they scroll into view; catch
+  // any that start while hidden.
+  if (site.pauseHiddenVideos) {
+    document.addEventListener(
+      "play",
+      (e) => {
+        if (hidingOn() && e.target.getClientRects().length === 0) e.target.pause();
+      },
+      true
+    );
+  }
+
+  // Hide immediately with the defaults so nothing flashes on screen, then
   // correct once the saved settings arrive.
   apply();
 

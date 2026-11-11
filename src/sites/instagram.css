@@ -1,0 +1,25 @@
+/*
+ * Short-Form Blocker — hides Reels across Instagram.
+ * Every rule is scoped to html[data-ysb-hide], which content.js sets only
+ * while blocking is switched on, so turning it off restores the page.
+ *
+ * Instagram's class names are machine-generated and change constantly, so
+ * these rules only rely on link targets and tag names. If Reels start
+ * showing up somewhere again, inspect the element and add a selector here.
+ */
+
+/* Reels entry in the sidebar / bottom bar, and the Reels tab on profiles
+   (both are links ending in /reels/). */
+html[data-ysb-hide] a[href$="/reels/"],
+
+/* Reel posts in the home feed: a post that links to a reel, or a video post
+   carrying a Reels audio link. Photo posts with music only have the audio
+   link, so they stay. Not applied on a post's own page, where you opened it
+   on purpose. */
+html[data-ysb-hide]:not([data-ysb-page="post"]) article:has(a[href*="/reel/"]),
+html[data-ysb-hide]:not([data-ysb-page="post"]) article:has(a[href*="/reels/audio/"]):has(video),
+
+/* Reel tiles in the Explore grid */
+html[data-ysb-hide][data-ysb-page="explore"] a[href*="/reel/"] {
+  display: none !important;
+}

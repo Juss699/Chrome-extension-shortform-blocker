@@ -7,7 +7,7 @@ TMP="$(mktemp -d)"
 trap 'kill "$SERVER" 2>/dev/null || true; rm -rf "$TMP"' EXIT
 openssl req -x509 -newkey rsa:2048 -nodes -keyout "$TMP/key.pem" -out "$TMP/cert.pem" \
   -days 1 -subj "/CN=www.youtube.com" 2>/dev/null
-python3 mock_youtube.py "$TMP" &
+python3 mock_sites.py "$TMP" &
 SERVER=$!
 sleep 1
 python3 e2e.py ..
