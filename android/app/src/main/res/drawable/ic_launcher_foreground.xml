@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 108dp adaptive-icon canvas; everything stays inside the 66dp safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Portrait "short" card -->
+    <path
+        android:fillColor="#F4F4F5"
+        android:pathData="M47,38h14a4,4 0,0 1,4 4v24a4,4 0,0 1,-4 4h-14a4,4 0,0 1,-4 -4v-24a4,4 0,0 1,4 -4z" />
+    <!-- Play triangle -->
+    <path
+        android:fillColor="#18181B"
+        android:pathData="M50.5,47.5L50.5,60.5L60,54Z" />
+    <!-- Prohibition ring -->
+    <path
+        android:pathData="M54,29a25,25 0,1 1,0 50a25,25 0,1 1,0 -50z"
+        android:strokeWidth="6"
+        android:strokeColor="#F43F5E" />
+    <!-- Slash -->
+    <path
+        android:pathData="M37.4,37.4L70.6,70.6"
+        android:strokeLineCap="butt"
+        android:strokeWidth="6"
+        android:strokeColor="#F43F5E" />
+</vector>

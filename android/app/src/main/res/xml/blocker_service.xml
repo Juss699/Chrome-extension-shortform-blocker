@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Listens only to the YouTube and Instagram apps. flagReportViewIds lets the
+  service look up the Shorts/Reels player by its view id;
+  flagIncludeNotImportantViews makes containers such as the player's pager
+  visible to it.
+-->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeWindowStateChanged|typeWindowContentChanged|typeViewScrolled"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagReportViewIds|flagIncludeNotImportantViews"
+    android:canRetrieveWindowContent="true"
+    android:description="@string/service_description"
+    android:notificationTimeout="150"
+    android:packageNames="com.google.android.youtube,com.instagram.android"
+    android:settingsActivity="io.github.juss699.shortformblocker.MainActivity" />

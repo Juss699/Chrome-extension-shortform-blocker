@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Short-Form Blocker</string>
+    <string name="tagline">No Shorts. No Reels.</string>
+
+    <string name="service_label">Short-Form Blocker</string>
+    <string name="service_description">Closes YouTube Shorts and Instagram Reels as soon as they open by pressing Back for you. It only looks at the YouTube and Instagram apps, it only checks which screen is open (not what is on it), and nothing leaves your phone.</string>
+
+    <string name="status_off_title">Blocking is off</string>
+    <string name="status_off_body">Turn on Short-Form Blocker in your phone\'s Accessibility settings. That lets it notice when Shorts or Reels open and press Back for you. It only looks at YouTube and Instagram, and nothing leaves your phone.</string>
+    <string name="status_on_title">Blocking is on</string>
+    <string name="status_on_body">Shorts and Reels will close as soon as they open.</string>
+    <string name="status_paused_title">Paused</string>
+    <string name="status_paused_body">Blocking comes back on in %1$s.</string>
+
+    <string name="open_accessibility">Open Accessibility settings</string>
+    <string name="restricted_help">Is the switch greyed out (\"Restricted setting\")? Android does that for apps installed outside the Play Store. Open App info, tap ⋮ in the top corner, choose \"Allow restricted settings\", then try again.</string>
+    <string name="open_app_info">Open App info</string>
+
+    <string name="section_block">BLOCK</string>
+    <string name="youtube_shorts">YouTube Shorts</string>
+    <string name="instagram_reels">Instagram Reels</string>
+    <string name="how_it_works">When the Shorts or Reels player opens, the app presses Back. Thumbnails in your feeds stay visible, but you can\'t scroll through them.</string>
+
+    <string name="pause_5_min">Pause for 5 minutes</string>
+    <string name="resume_now">Resume blocking now</string>
+    <string name="block_count">Blocked so far: %1$d Shorts · %2$d Reels</string>
+
+    <string name="section_diagnostics">IF SOMETHING SLIPS THROUGH</string>
+    <string name="diagnostics_switch">Record screen layout</string>
+    <string name="diagnostics_help">YouTube and Instagram sometimes rename their screens in updates. Turn this on, open a Short or Reel that got through, then come back and share the report. It only lists layout names, no text or content.</string>
+    <string name="share_diagnostics">Share report</string>
+    <string name="diagnostics_subject">Short-Form Blocker diagnostics</string>
+
+    <string name="privacy">No ads, no tracking, no internet access.</string>
+
+    <string name="blocked_toast">%1$s blocked</string>
+</resources>
