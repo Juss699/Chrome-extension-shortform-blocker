@@ -12,16 +12,20 @@ package io.github.juss699.shortformblocker
 enum class Platform(
     val packageName: String,
     val itemName: String,
+    /** Opens the app on its home feed (used when Back doesn't close the player). */
+    val homeUrl: String,
     playerViewIds: List<String>,
 ) {
     YOUTUBE(
         packageName = "com.google.android.youtube",
         itemName = "Short",
+        homeUrl = "https://www.youtube.com/",
         playerViewIds = listOf("reel_recycler", "reel_player_page_container"),
     ),
     INSTAGRAM(
         packageName = "com.instagram.android",
         itemName = "Reel",
+        homeUrl = "https://www.instagram.com/",
         playerViewIds = listOf("clips_viewer_view_pager"),
     );
 

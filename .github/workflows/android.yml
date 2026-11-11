@@ -3,22 +3,26 @@ name: Android app
 # Builds the APK on every change to android/ and publishes it as the
 # "android-latest" release, so it can be downloaded straight to a phone:
 # https://github.com/<owner>/<repo>/releases/latest/download/ShortFormBlocker.apk
+#
+# Signing: Android only installs an update over an app signed with the same
+# key. The build's signing key is kept in the Actions cache so every build
+# uses the same one; the weekly "keep-key" job stops the cache from expiring.
 on:
   push:
     branches: [main]
     paths:
       - "android/**"
       - ".github/workflows/android.yml"
-  pull_request:
-    paths:
-      - "android/**"
   workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * 1"
 
 permissions:
   contents: write
 
 jobs:
   build:
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -33,6 +37,12 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
+      - name: Restore signing key
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: android-signing-key-v1
+
       - name: Build APK
         run: ./gradlew --no-daemon assembleRelease
 
@@ -45,7 +55,7 @@ jobs:
           path: android/ShortFormBlocker.apk
 
       - name: Publish release
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -57,3 +67,13 @@ jobs:
             --notes "Latest build of the Short-Form Blocker Android app from commit ${GITHUB_SHA::7}.
 
           **Install:** open this page on your Android phone, tap **ShortFormBlocker.apk**, and allow your browser to install apps when asked. Then open the app and follow the steps on screen. See the README for details."
+
+  keep-key:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Touch the cached signing key
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: android-signing-key-v1

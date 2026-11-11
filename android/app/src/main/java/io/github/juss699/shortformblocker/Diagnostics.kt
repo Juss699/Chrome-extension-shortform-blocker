@@ -18,7 +18,7 @@ object Diagnostics {
     private const val MAX_NODES = 2_000
     private const val MAX_SNAPSHOTS = 4
 
-    fun snapshot(platform: Platform, root: AccessibilityNodeInfo): String {
+    fun snapshot(platform: Platform, root: AccessibilityNodeInfo, player: String): String {
         val prefix = "${platform.packageName}:id/"
         val ids = sortedSetOf<String>()
         val stack = java.util.ArrayDeque<AccessibilityNodeInfo>()
@@ -35,7 +35,7 @@ object Diagnostics {
             }
         }
         val time = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date())
-        return "[$time] ${ids.joinToString(" ")}"
+        return "[$time] player=$player ${ids.joinToString(" ")}"
     }
 
     /** Keeps the most recent [MAX_SNAPSHOTS] snapshots. */

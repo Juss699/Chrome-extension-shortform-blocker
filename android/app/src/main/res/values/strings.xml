@@ -4,12 +4,12 @@
     <string name="tagline">No Shorts. No Reels.</string>
 
     <string name="service_label">Short-Form Blocker</string>
-    <string name="service_description">Closes YouTube Shorts and Instagram Reels as soon as they open by pressing Back for you. It only looks at the YouTube and Instagram apps, it only checks which screen is open (not what is on it), and nothing leaves your phone.</string>
+    <string name="service_description">Stops YouTube Shorts and Instagram Reels as soon as they open: it pauses them and presses Back for you. It only looks at the YouTube and Instagram apps, it only checks which screen is open (not what is on it), and nothing leaves your phone.</string>
 
     <string name="status_off_title">Blocking is off</string>
     <string name="status_off_body">Turn on Short-Form Blocker in your phone\'s Accessibility settings. That lets it notice when Shorts or Reels open and press Back for you. It only looks at YouTube and Instagram, and nothing leaves your phone.</string>
     <string name="status_on_title">Blocking is on</string>
-    <string name="status_on_body">Shorts and Reels will close as soon as they open.</string>
+    <string name="status_on_body">Shorts and Reels are paused and closed as soon as they open.</string>
     <string name="status_paused_title">Paused</string>
     <string name="status_paused_body">Blocking comes back on in %1$s.</string>
 
@@ -20,7 +20,7 @@
     <string name="section_block">BLOCK</string>
     <string name="youtube_shorts">YouTube Shorts</string>
     <string name="instagram_reels">Instagram Reels</string>
-    <string name="how_it_works">When the Shorts or Reels player opens, the app presses Back. Thumbnails in your feeds stay visible, but you can\'t scroll through them.</string>
+    <string name="how_it_works">When the Shorts or Reels player opens, the app pauses it and takes you back, staying inside the app. If it shrinks into a small floating window, it gets paused there too. Thumbnails in your feeds stay visible, but you can\'t scroll through them.</string>
 
     <string name="pause_5_min">Pause for 5 minutes</string>
     <string name="resume_now">Resume blocking now</string>
