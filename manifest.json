@@ -1,0 +1,57 @@
+{
+  "manifest_version": 3,
+  "name": "Shorts Blocker for YouTube",
+  "short_name": "Shorts Blocker",
+  "version": "1.0.0",
+  "description": "Removes YouTube Shorts from your feeds, search and sidebar, and opens Shorts links in the normal video player.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "permissions": ["storage", "declarativeNetRequest"],
+  "host_permissions": [
+    "*://youtube.com/*",
+    "*://www.youtube.com/*",
+    "*://m.youtube.com/*"
+  ],
+  "background": {
+    "service_worker": "src/background.js"
+  },
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "shorts_to_watch",
+        "enabled": true,
+        "path": "rules/shorts_to_watch.json"
+      },
+      {
+        "id": "shorts_to_home",
+        "enabled": false,
+        "path": "rules/shorts_to_home.json"
+      }
+    ]
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://youtube.com/*",
+        "*://www.youtube.com/*",
+        "*://m.youtube.com/*"
+      ],
+      "js": ["src/defaults.js", "src/content.js"],
+      "css": ["src/content.css"],
+      "run_at": "document_start"
+    }
+  ],
+  "action": {
+    "default_title": "Shorts Blocker",
+    "default_popup": "src/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png"
+    }
+  }
+}

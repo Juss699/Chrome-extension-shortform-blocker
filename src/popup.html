@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Shorts Blocker</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header>
+      <img src="../icons/icon48.png" alt="" width="32" height="32" />
+      <div class="title">
+        <h1>Shorts Blocker</h1>
+        <p id="status">Blocking Shorts on YouTube</p>
+      </div>
+      <label class="switch" title="Turn Shorts Blocker on or off">
+        <input type="checkbox" id="enabled" aria-label="Enable Shorts Blocker" />
+        <span class="track"></span>
+      </label>
+    </header>
+
+    <main id="options">
+      <label class="row">
+        <span class="text">
+          <strong>Hide Shorts</strong>
+          <small>Home, subscriptions, search, sidebar and channel tabs</small>
+        </span>
+        <span class="switch">
+          <input type="checkbox" id="hideShorts" />
+          <span class="track"></span>
+        </span>
+      </label>
+
+      <fieldset>
+        <legend>When a Shorts link is opened</legend>
+        <label class="radio">
+          <input type="radio" name="redirect" value="watch" />
+          <span>Play it in the normal player</span>
+        </label>
+        <label class="radio">
+          <input type="radio" name="redirect" value="home" />
+          <span>Go to the YouTube homepage</span>
+        </label>
+        <label class="radio">
+          <input type="radio" name="redirect" value="off" />
+          <span>Leave it alone</span>
+        </label>
+      </fieldset>
+    </main>
+
+    <script src="defaults.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>

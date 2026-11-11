@@ -1,0 +1,45 @@
+/*
+ * Shorts Blocker — hides Shorts across YouTube.
+ * Every rule is scoped to html[data-ysb-hide], which content.js sets only
+ * while blocking is switched on, so turning it off restores the page.
+ *
+ * YouTube renames its components from time to time. If Shorts start showing
+ * up somewhere again, inspect the element and add its selector here.
+ */
+
+/* Sidebar entry, plus anything content.js flagged by its "Shorts" label
+   (sidebar, search filter chip, channel tab, mobile bottom bar). */
+html[data-ysb-hide] [data-ysb-shorts],
+html[data-ysb-hide] ytd-guide-entry-renderer:has(a[title="Shorts" i]),
+html[data-ysb-hide] ytd-mini-guide-entry-renderer[aria-label="Shorts" i],
+html[data-ysb-hide] yt-tab-shape[tab-title="Shorts" i],
+
+/* Shorts shelves: home, subscriptions, search, channel, watch page, history */
+html[data-ysb-hide] ytd-reel-shelf-renderer,
+html[data-ysb-hide] ytd-rich-shelf-renderer[is-shorts],
+html[data-ysb-hide] ytd-rich-section-renderer:has(ytd-rich-shelf-renderer[is-shorts]),
+html[data-ysb-hide] ytd-rich-section-renderer:has(ytm-shorts-lockup-view-model),
+html[data-ysb-hide] ytd-rich-section-renderer:has(ytm-shorts-lockup-view-model-v2),
+html[data-ysb-hide] grid-shelf-view-model:has(ytm-shorts-lockup-view-model),
+html[data-ysb-hide] grid-shelf-view-model:has(ytm-shorts-lockup-view-model-v2),
+html[data-ysb-hide] ytm-shorts-lockup-view-model,
+html[data-ysb-hide] ytm-shorts-lockup-view-model-v2,
+
+/* Single video cards that point at a Short */
+html[data-ysb-hide] ytd-rich-item-renderer:has(a[href*="/shorts/"]),
+html[data-ysb-hide] ytd-video-renderer:has(a[href*="/shorts/"]),
+html[data-ysb-hide] ytd-grid-video-renderer:has(a[href*="/shorts/"]),
+html[data-ysb-hide] ytd-compact-video-renderer:has(a[href*="/shorts/"]),
+html[data-ysb-hide] yt-lockup-view-model:has(a[href*="/shorts/"]),
+html[data-ysb-hide] ytd-notification-renderer:has(a[href*="/shorts/"]),
+
+/* m.youtube.com */
+html[data-ysb-hide] ytm-reel-shelf-renderer,
+html[data-ysb-hide] ytm-rich-section-renderer:has(ytm-reel-shelf-renderer),
+html[data-ysb-hide] ytm-rich-section-renderer:has(ytm-shorts-lockup-view-model),
+html[data-ysb-hide] ytm-rich-item-renderer:has(a[href*="/shorts/"]),
+html[data-ysb-hide] ytm-video-with-context-renderer:has(a[href*="/shorts/"]),
+html[data-ysb-hide] ytm-compact-video-renderer:has(a[href*="/shorts/"]),
+html[data-ysb-hide] ytm-pivot-bar-item-renderer:has(.pivot-shorts) {
+  display: none !important;
+}
