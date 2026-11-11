@@ -11,8 +11,8 @@ android {
         applicationId = "io.github.juss699.shortformblocker"
         minSdk = 26
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.1.0"
+        versionCode = 3
+        versionName = "1.2.0"
     }
 
     // CI passes a persistent keystore (see .github/workflows/android.yml) so

@@ -1,7 +1,11 @@
 package io.github.juss699.shortformblocker
 
 /**
- * An app whose short-form player gets blocked.
+ * An app whose short-form content gets blocked.
+ *
+ * [tabLabel]/[tabViewIds] identify its Shorts/Reels button in the bottom
+ * navigation bar, which [TabCovers] hides. [darkBarColor] is the bar's colour
+ * in dark mode, used until the real colour has been sampled.
  *
  * [playerViewIds] are view ids that only exist while the full-screen,
  * swipeable Shorts/Reels player is open, so seeing one of them on screen is
@@ -14,18 +18,27 @@ enum class Platform(
     val itemName: String,
     /** Opens the app on its home feed (used when Back doesn't close the player). */
     val homeUrl: String,
+    val tabLabel: String,
+    val tabViewIds: List<String>,
+    val darkBarColor: Int,
     playerViewIds: List<String>,
 ) {
     YOUTUBE(
         packageName = "com.google.android.youtube",
         itemName = "Short",
         homeUrl = "https://www.youtube.com/",
+        tabLabel = "Shorts",
+        tabViewIds = emptyList(),
+        darkBarColor = 0xFF0F0F0F.toInt(),
         playerViewIds = listOf("reel_recycler", "reel_player_page_container"),
     ),
     INSTAGRAM(
         packageName = "com.instagram.android",
         itemName = "Reel",
         homeUrl = "https://www.instagram.com/",
+        tabLabel = "Reels",
+        tabViewIds = listOf("clips_tab"),
+        darkBarColor = 0xFF000000.toInt(),
         playerViewIds = listOf("clips_viewer_view_pager"),
     );
 

@@ -11,16 +11,19 @@ import java.util.Locale
 /**
  * Optional, user-enabled record of which view ids are on screen in YouTube and
  * Instagram. When an app update renames its Shorts/Reels player, this report
- * shows the new ids so [Platform.fullViewIds] can be updated. It never
- * records text, only view ids, and it stays on the phone unless shared.
+ * shows the new ids so [Platform] can be updated. It records view ids and
+ * the short labels of the bottom navigation buttons, never content, and it
+ * stays on the phone unless shared.
  */
 object Diagnostics {
     private const val MAX_NODES = 2_000
     private const val MAX_SNAPSHOTS = 4
 
-    fun snapshot(platform: Platform, root: AccessibilityNodeInfo, player: String): String {
+    fun snapshot(platform: Platform, root: AccessibilityNodeInfo, status: String, screenHeight: Int): String {
         val prefix = "${platform.packageName}:id/"
         val ids = sortedSetOf<String>()
+        val bottomLabels = sortedSetOf<String>()
+        val bounds = android.graphics.Rect()
         val stack = java.util.ArrayDeque<AccessibilityNodeInfo>()
         stack.push(root)
         var visited = 0
@@ -29,13 +32,22 @@ object Diagnostics {
             visited++
             if (node.isVisibleToUser) {
                 node.viewIdResourceName?.let { ids.add(it.removePrefix(prefix)) }
+                // Labels of buttons along the bottom edge (the navigation bar),
+                // to help find a renamed Shorts/Reels tab. Short labels only.
+                if (node.isClickable) {
+                    node.getBoundsInScreen(bounds)
+                    val label = (node.contentDescription ?: node.text)?.toString()?.trim().orEmpty()
+                    if (bounds.top > screenHeight * 0.8f && label.isNotEmpty() && label.length <= 24) {
+                        bottomLabels.add(label)
+                    }
+                }
             }
             for (i in 0 until node.childCount) {
                 node.getChild(i)?.let { stack.push(it) }
             }
         }
         val time = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date())
-        return "[$time] player=$player ${ids.joinToString(" ")}"
+        return "[$time] $status | bottom bar: ${bottomLabels.joinToString(", ")} | ids: ${ids.joinToString(" ")}"
     }
 
     /** Keeps the most recent [MAX_SNAPSHOTS] snapshots. */
@@ -51,7 +63,7 @@ object Diagnostics {
         for (platform in Platform.entries) {
             appendLine()
             appendLine("${platform.packageName} ${versionOf(context, platform.packageName)}")
-            appendLine("Looking for: ${platform.fullViewIds.joinToString { it.substringAfter(":id/") }}")
+            appendLine("Tab: \"${platform.tabLabel}\" ${platform.tabViewIds}; player: ${platform.fullViewIds.joinToString { it.substringAfter(":id/") }}")
             appendLine(prefs.diagnosticsLog(platform).ifBlank { "(nothing recorded yet)" })
         }
     }

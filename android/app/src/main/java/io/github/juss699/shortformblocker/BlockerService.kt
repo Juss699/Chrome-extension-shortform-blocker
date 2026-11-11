@@ -3,6 +3,7 @@ package io.github.juss699.shortformblocker
 import android.accessibilityservice.AccessibilityService
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.Rect
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
@@ -20,12 +21,14 @@ import android.widget.Toast
  * Watches the YouTube and Instagram apps (the only packages it is subscribed
  * to, see res/xml/blocker_service.xml).
  *
- * - When the full-screen Shorts/Reels player opens, it pauses playback and
- *   presses Back, which returns to wherever the player was opened from.
- * - If the player shrinks into the app's miniplayer or a picture-in-picture
- *   window instead of closing, it is paused there.
- * - It never presses Home: leaving an app while a video plays is exactly what
- *   sends YouTube into picture-in-picture.
+ * - Hides the Shorts/Reels button in the bottom navigation bar by covering
+ *   it (see [TabCovers]).
+ * - Optionally ([Prefs.closePlayers]), when the full-screen Shorts/Reels
+ *   player opens some other way, it pauses playback and presses Back, which
+ *   returns to wherever the player was opened from. If the player shrinks
+ *   into the app's miniplayer or a picture-in-picture window instead of
+ *   closing, it is paused there. It never presses Home: leaving an app while
+ *   a video plays is exactly what sends YouTube into picture-in-picture.
  */
 class BlockerService : AccessibilityService() {
 
@@ -33,6 +36,7 @@ class BlockerService : AccessibilityService() {
 
     private lateinit var prefs: Prefs
     private lateinit var audio: AudioManager
+    private lateinit var covers: TabCovers
     private val handler = Handler(Looper.getMainLooper())
 
     private var lastActionAt = 0L
@@ -52,17 +56,29 @@ class BlockerService : AccessibilityService() {
     private fun ensureInitialized() {
         if (!::prefs.isInitialized) prefs = Prefs(this)
         if (!::audio.isInitialized) audio = getSystemService(AUDIO_SERVICE) as AudioManager
+        if (!::covers.isInitialized) {
+            covers = TabCovers(
+                service = this,
+                shouldCover = { platform -> prefs.isBlocking(platform) && !prefs.isPaused },
+                onBlockedTap = { platform ->
+                    prefs.incrementBlockCount(platform)
+                    Toast.makeText(this, getString(R.string.tab_blocked_toast, platform.tabLabel), Toast.LENGTH_SHORT).show()
+                },
+            )
+        }
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         val platform = Platform.forPackage(event?.packageName) ?: return
         ensureInitialized()
 
+        val tabCovered = covers.update(platform)
+
         val front = rootInActiveWindow?.takeIf { it.packageName?.toString() == platform.packageName }
         val frontPlayer = front?.let { playerIn(platform, it) } ?: Player.NONE
-        if (front != null && prefs.diagnostics) recordSnapshot(platform, front, frontPlayer)
+        if (front != null && prefs.diagnostics) recordSnapshot(platform, front, frontPlayer, tabCovered)
 
-        if (!prefs.isBlocking(platform) || prefs.isPaused) return
+        if (!prefs.isBlocking(platform) || prefs.isPaused || !prefs.closePlayers) return
 
         if (frontPlayer == Player.FULL_SCREEN) {
             leavePlayer(platform)
@@ -174,17 +190,24 @@ class BlockerService : AccessibilityService() {
             false
         }
 
-    private fun recordSnapshot(platform: Platform, root: AccessibilityNodeInfo, player: Player) {
+    private fun recordSnapshot(platform: Platform, root: AccessibilityNodeInfo, player: Player, tabCovered: Boolean) {
         val now = SystemClock.elapsedRealtime()
         if (now - (lastSnapshotAt[platform] ?: 0L) < SNAPSHOT_INTERVAL_MS) return
         lastSnapshotAt[platform] = now
-        val snapshot = Diagnostics.snapshot(platform, root, player.name.lowercase())
+        val status = "tab=${if (tabCovered) "covered" else "not found"} player=${player.name.lowercase()}"
+        val snapshot = Diagnostics.snapshot(platform, root, status, resources.displayMetrics.heightPixels)
         prefs.setDiagnosticsLog(platform, Diagnostics.append(prefs.diagnosticsLog(platform), snapshot))
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        if (::covers.isInitialized) covers.onThemeChanged()
     }
 
     override fun onInterrupt() = Unit
 
     override fun onDestroy() {
+        if (::covers.isInitialized) covers.hide()
         handler.removeCallbacksAndMessages(null)
         if (::audio.isInitialized) releaseFocus.run()
         super.onDestroy()

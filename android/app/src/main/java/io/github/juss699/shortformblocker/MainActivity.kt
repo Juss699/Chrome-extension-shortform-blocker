@@ -26,6 +26,7 @@ class MainActivity : Activity() {
     private lateinit var openAppInfo: Button
     private lateinit var youtubeSwitch: Switch
     private lateinit var instagramSwitch: Switch
+    private lateinit var closePlayersSwitch: Switch
     private lateinit var pauseButton: Button
     private lateinit var countText: TextView
     private lateinit var diagnosticsSwitch: Switch
@@ -51,6 +52,7 @@ class MainActivity : Activity() {
         openAppInfo = findViewById(R.id.open_app_info)
         youtubeSwitch = findViewById(R.id.switch_youtube)
         instagramSwitch = findViewById(R.id.switch_instagram)
+        closePlayersSwitch = findViewById(R.id.switch_close_players)
         pauseButton = findViewById(R.id.pause_button)
         countText = findViewById(R.id.count_text)
         diagnosticsSwitch = findViewById(R.id.switch_diagnostics)
@@ -66,6 +68,7 @@ class MainActivity : Activity() {
         }
         youtubeSwitch.setOnCheckedChangeListener { _, on -> prefs.setBlocking(Platform.YOUTUBE, on) }
         instagramSwitch.setOnCheckedChangeListener { _, on -> prefs.setBlocking(Platform.INSTAGRAM, on) }
+        closePlayersSwitch.setOnCheckedChangeListener { _, on -> prefs.closePlayers = on }
         pauseButton.setOnClickListener {
             prefs.pausedUntil = if (prefs.isPaused) 0L else System.currentTimeMillis() + PAUSE_MS
             restartTicker()
@@ -115,6 +118,7 @@ class MainActivity : Activity() {
 
         youtubeSwitch.isChecked = prefs.isBlocking(Platform.YOUTUBE)
         instagramSwitch.isChecked = prefs.isBlocking(Platform.INSTAGRAM)
+        closePlayersSwitch.isChecked = prefs.closePlayers
 
         pauseButton.isEnabled = serviceOn
         pauseButton.setText(if (paused) R.string.resume_now else R.string.pause_5_min)

@@ -14,13 +14,13 @@ Blocks **YouTube Shorts** and **Instagram Reels**, on your computer and on your 
 **[Download ShortFormBlocker.apk](https://github.com/Juss699/Chrome-extension-shortform-blocker/releases/latest/download/ShortFormBlocker.apk)** (Android 8.0 or newer)
 
 ### What it does
-- When the **Shorts player** opens in the YouTube app, or the **Reels player** opens in the Instagram app, it pauses it and presses Back for you, staying inside the app. You'll see a short "Short blocked" / "Reel blocked" message.
-- If a Short or Reel shrinks into the app's miniplayer or a floating picture-in-picture window, it gets paused there too.
-- Switch YouTube and Instagram on or off separately, or **pause for 5 minutes** (handy when a friend sends you a reel).
-- Counts how many Shorts and Reels it has blocked.
+- **Hides the Shorts button** in the YouTube app and the **Reels button** in the Instagram app. It covers each one with a patch in the navigation bar's colour that swallows taps. Android doesn't let one app remove parts of another app, so this is the closest equivalent; a gap is left where the button was.
+- **Optional: closes Shorts and Reels opened another way**, for example from a thumbnail in the feed. It pauses them and presses Back, staying inside the app, and also pauses them if they shrink into the miniplayer or a picture-in-picture window. This is off by default; turn it on in the app.
+- Switch YouTube and Instagram on or off separately, or **pause for 5 minutes**.
+- Counts how many times it has blocked Shorts and Reels.
 - Needs no internet permission and has no ads or tracking. It only receives events from the YouTube and Instagram apps.
 
-It can't remove Shorts and Reels thumbnails from the feeds inside those apps. Android doesn't let one app change another's screen. But you can't open them and start scrolling.
+Shorts and Reels thumbnails inside the feeds can't be covered: they move as you scroll, and a cover would lag behind. Turn on the close option if you want those blocked too.
 
 ### Install
 1. On your phone, tap the download link above.
@@ -32,16 +32,19 @@ When it says **Blocking is on**, you're done.
 
 **Updating:** download and install the new APK over the old one. If Android says the app conflicts with an existing one, uninstall the old version first. That happens if your copy is from before version 1.1.0, or if the build's signing key expired after months without a build.
 
-### If a Short or Reel gets through
+### If a button isn't hidden, or a Short or Reel gets through
 YouTube and Instagram sometimes rename their screens in app updates. To find the new names:
 1. In Short-Form Blocker, turn on **Record screen layout**.
-2. Open a Short or Reel that wasn't blocked, then come back to Short-Form Blocker.
-3. Tap **Share report** and send it to whoever maintains this repo (or open an issue). The report only lists layout names, like `reel_recycler`, never text or content.
+2. Open YouTube or Instagram where the button wasn't hidden (or open the Short or Reel that got through), then come back to Short-Form Blocker.
+3. Tap **Share report** and send it to whoever maintains this repo (or open an issue). The report lists layout names like `reel_recycler` and the labels of the bottom navigation buttons, never content.
 
-The fix is usually a one-line change to the ids in [`Platform.kt`](android/app/src/main/java/io/github/juss699/shortformblocker/Platform.kt).
+The fix is usually a one-line change in [`Platform.kt`](android/app/src/main/java/io/github/juss699/shortformblocker/Platform.kt).
 
 ### How it works
-`BlockerService` is an [accessibility service](https://developer.android.com/guide/topics/ui/accessibility/service) subscribed only to `com.google.android.youtube` and `com.instagram.android`. On each screen change it checks for the view ids that exist only inside the full-screen Shorts/Reels player (`reel_recycler`, `reel_player_page_container`, `clips_viewer_view_pager`). When one fills the screen, it pauses playback (a media pause key plus briefly taking audio focus), then calls `performGlobalAction(GLOBAL_ACTION_BACK)`. It waits 1.5 s for the app to finish its transition before trying again. If two Backs don't close the player, it opens the app's own home feed. It never presses Home, because leaving YouTube while a video plays sends it into picture-in-picture. A player that has shrunk (miniplayer, or a picture-in-picture window found through `getWindows()`) is paused.
+`BlockerService` is an [accessibility service](https://developer.android.com/guide/topics/ui/accessibility/service) subscribed only to `com.google.android.youtube` and `com.instagram.android`.
+
+- **Hiding the button** ([`TabCovers.kt`](android/app/src/main/java/io/github/juss699/shortformblocker/TabCovers.kt)): it finds the Shorts/Reels tab in the bottom navigation bar. Instagram's has a known id (`clips_tab`). Otherwise it looks for a small tab labelled exactly "Shorts"/"Reels" at the bottom of the window, in a row of at least three tabs. Then it draws a `TYPE_ACCESSIBILITY_OVERLAY` window exactly over it. The cover is the bar's colour: on Android 11+ it reads one pixel beside the button with `takeScreenshot`, and otherwise it guesses from light/dark mode. The cover is removed whenever the app isn't in front or something (keyboard, notification shade, another app) is on top of the button.
+- **Closing players (optional):** when a view that only exists in the full-screen Shorts/Reels player (`reel_recycler`, `reel_player_page_container`, `clips_viewer_view_pager`) fills the screen, it pauses playback (media pause key plus briefly taking audio focus), then presses Back. It waits 1.5 s before retrying, and after two Backs it opens the app's home feed instead. It never presses Home, because that sends a playing video into picture-in-picture. Shrunk players are paused.
 
 ### Build it yourself
 GitHub Actions builds the APK on every change to `android/` and publishes it as the [`android-latest` release](https://github.com/Juss699/Chrome-extension-shortform-blocker/releases/tag/android-latest). To build locally with Android Studio or the SDK installed:

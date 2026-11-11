@@ -4,13 +4,16 @@
   service look up the Shorts/Reels player by its view id;
   flagIncludeNotImportantViews makes containers such as the player's pager
   visible to it; flagRetrieveInteractiveWindows lets it find a player that has
-  shrunk into a picture-in-picture window.
+  shrunk into a picture-in-picture window. canTakeScreenshot (Android 11+) is
+  used only to read the colour of one pixel beside the Shorts/Reels button,
+  so the cover over it matches the navigation bar.
 -->
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
     android:accessibilityEventTypes="typeWindowStateChanged|typeWindowContentChanged|typeViewScrolled"
     android:accessibilityFeedbackType="feedbackGeneric"
     android:accessibilityFlags="flagReportViewIds|flagIncludeNotImportantViews|flagRetrieveInteractiveWindows"
     android:canRetrieveWindowContent="true"
+    android:canTakeScreenshot="true"
     android:description="@string/service_description"
     android:notificationTimeout="150"
     android:packageNames="com.google.android.youtube,com.instagram.android"

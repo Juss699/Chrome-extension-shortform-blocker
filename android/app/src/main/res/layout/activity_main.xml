@@ -124,6 +124,20 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:text="@string/how_it_works" />
+
+            <Switch
+                android:id="@+id/switch_close_players"
+                style="@style/Toggle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/close_players" />
+
+            <TextView
+                style="@style/Text.Muted"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/close_players_help" />
         </LinearLayout>
 
         <!-- Pause + stats -->

@@ -28,6 +28,11 @@ class Prefs(context: Context) {
         sp.edit().putInt(platform.countKey, blockCount(platform) + 1).apply()
     }
 
+    /** Also pause and close Shorts/Reels opened some other way (e.g. a feed thumbnail). */
+    var closePlayers: Boolean
+        get() = sp.getBoolean(KEY_CLOSE_PLAYERS, false)
+        set(value) = sp.edit().putBoolean(KEY_CLOSE_PLAYERS, value).apply()
+
     var diagnostics: Boolean
         get() = sp.getBoolean(KEY_DIAGNOSTICS, false)
         set(value) = sp.edit().putBoolean(KEY_DIAGNOSTICS, value).apply()
@@ -42,5 +47,6 @@ class Prefs(context: Context) {
     private companion object {
         const val KEY_PAUSED_UNTIL = "paused_until"
         const val KEY_DIAGNOSTICS = "diagnostics"
+        const val KEY_CLOSE_PLAYERS = "close_players"
     }
 }
